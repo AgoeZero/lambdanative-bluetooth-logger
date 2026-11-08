@@ -1,0 +1,81 @@
+native void PushDeviceName(String name);
+native void PushData(String data);
+
+public void JavaGetDeviceName(int id){
+  //Toast.makeText(this, String.valueOf(id), Toast.LENGTH_SHORT).show();
+  if (deviceList.isEmpty()){
+    PushDeviceName("No Device Found");
+    return;
+  }
+  
+  int index = Math.floorMod(id, deviceList.size());
+  //Toast.makeText(this, String.valueOf(index), Toast.LENGTH_SHORT).show();
+  //if (true) return;
+  BluetoothDevice device = deviceList.get(index);
+  String name = device.getName();
+  if (name == null){
+    PushDeviceName(device.getAddress());
+  } else {
+    PushDeviceName(name);
+  }
+
+  PushDeviceName(name != null ? name : device.getAddress());
+  return;
+}
+
+public void JavaConnectToDevice(int id){
+  //First close any open sockets
+  if (socket != null){
+    try {
+      socket.close();
+    } catch (IOException ignored){
+      //already closed
+    }
+    socket = null;
+  }
+
+  //Now create connect the socket to the device
+  int index = Math.floorMod(id, deviceList.size());
+  BluetoothDevice device = deviceList.get(index);
+  try {
+    socket = device.createRfcommSocketToServiceRecord(SPP_ID);
+  } catch (IOException e){
+    socket = null;
+  }
+  if (socket != null){
+    try {
+      socket.connect();
+    } catch (IOException e){
+      //just ignored
+    }
+  } 
+}
+
+public void JavaReadFromSocket(){
+  if (socket == null) return;
+  InputStream in;
+  try{
+    in = socket.getInputStream();
+  } catch (IOException e){
+    return;
+  }
+  
+
+  //check if there is available data
+  try {
+    if (in.available() < 1) return;
+  } catch (IOException e){
+    return;
+  }
+
+  byte [] buffer = new byte[1024];
+  int n;
+  try {
+    n = in.read(buffer);
+  } catch (IOException e){
+    return;
+  }
+
+  String data = new String(Arrays.copyOf(buffer, n), StandardCharsets.UTF_8);
+  PushData(data);
+}

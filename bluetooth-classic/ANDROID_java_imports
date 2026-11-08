@@ -1,0 +1,14 @@
+
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.Arrays;

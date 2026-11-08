@@ -1,0 +1,18 @@
+
+adapter = BluetoothAdapter.getDefaultAdapter();
+if(adapter == null){
+  Toast.makeText(this, "Bluetooth is off", Toast.LENGTH_SHORT).show();
+  return;
+}
+
+deviceList = new ArrayList<>();
+
+Set<BluetoothDevice> pairedDevices = adapter.getBondedDevices();
+
+for (BluetoothDevice device : pairedDevices){
+  deviceList.add(device);
+}
+
+//Toast.makeText(this, String.valueOf(deviceList.size()), Toast.LENGTH_SHORT).show();
+SPP_ID = UUID.fromString("00001101-000-1000-8000-00805F9B34FB");
+socket = null;

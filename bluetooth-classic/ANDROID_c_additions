@@ -1,0 +1,44 @@
+char dev[64];
+char data[1024];
+
+void Java_@SYS_PACKAGE_UNDERSCORE@_@SYS_APPNAME@_PushDeviceName(JNIEnv* env, jobject obj, jstring name) {
+  const char* str = (*env)->GetStringUTFChars(env, name, 0);
+  strlcpy(dev, str, 64);
+  (*env)->ReleaseStringUTFChars(env, name, str);
+}
+
+void Java_@SYS_PACKAGE_UNDERSCORE@_@SYS_APPNAME@_PushData(JNIEnv* env, jobject obj, jstring jdata) {
+  const char* str = (*env)->GetStringUTFChars(env, jdata, 0);
+  strlcpy(data, str, 1024);
+  (*env)->ReleaseStringUTFChars(env, jdata, str);
+}
+
+char* GetDeviceName(int id){
+  JNIEnv *env = GetJNIEnv();
+  jclass main_class = (*env)->FindClass(env, "@SYS_PACKAGE_SLASH@/@SYS_APPNAME@");
+  if (env&&globalObj){
+    jmethodID method = (*env)->GetMethodID(env, main_class, "JavaGetDeviceName", "(I)V");
+    (*env)->CallVoidMethod(env, globalObj, method, id);
+    //return "Call Worked";
+  }
+  return dev;
+}
+
+void ConnectToDevice(int id){
+  JNIEnv *env = GetJNIEnv();
+  jclass main_class = (*env)->FindClass(env, "@SYS_PACKAGE_SLASH@/@SYS_APPNAME@");
+  if (env&&globalObj){
+    jmethodID method = (*env)->GetMethodID(env, main_class, "JavaConnectToDevice", "(I)V");
+    (*env)->CallVoidMethod(env, globalObj, method, id);
+    //return "Call Worked";
+  }
+}
+
+void ReadFromSocket(int id){
+  JNIEnv *env = GetJNIEnv();
+  jclass main_class = (*env)->FindClass(env, "@SYS_PACKAGE_SLASH@/@SYS_APPNAME@");
+  if (env&&globalObj){
+    jmethodID method = (*env)->GetMethodID(env, main_class, "JavaReadFromSocket", "()V");
+    (*env)->CallVoidMethod(env, globalObj, method);
+  }
+}

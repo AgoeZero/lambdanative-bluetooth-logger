@@ -1,61 +1,16 @@
-#|
-LambdaNative - a cross-platform Scheme framework
-Copyright (c) 2025, John Agoe
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or
-without modification, are permitted provided that the
-following conditions are met:
-
-* Redistributions of source code must retain the above
-copyright notice, this list of conditions and the following
-disclaimer.
-
-* Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following
-disclaimer in the documentation and/or other materials
-provided with the distribution.
-
-* Neither the name of the University of British Columbia nor
-the names of its contributors may be used to endorse or
-promote products derived from this software without specific
-prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
-CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-|#
-
-
-;;(c-declare "#include \"main.c\"")
 (define gui #f)
-(define text #f)
-(define img-box #f)
-(define width 402)
-(define height 874)
+(define width 720)
+(define height 1280)
 (define padding 20)
-
+(define theme-bg DarkBlue)
+(define theme-fg White)
+(define device-selector #f)
+(set! cursor 0)
 
 (define vh(lambda(h)
     (set! h (/ h 100))
     (set! h (* h height))
     (+ h 0)
-))
-
-(define vw(lambda(w)
-    (set! w (/ w 100))
-    (set! w (* w width))
-    (+ w 0)
 ))
 
 (define center(lambda(w)
@@ -64,29 +19,51 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     (+ w 0)
 ))
 
-(define result (lambda(t p)
-    (glgui-box gui (center (- width padding)) (vh p) (- width padding) (vh 7) Blue)
-    (glgui-box gui (+ (center (- width padding)) 1) (+ (vh p) 1) (- (- width padding) 2) (- (vh 7) 2) DarkGrey)
-    (set! text (glgui-label gui (+ (center (- width padding)) (vh 10)) (vh p) (- width padding) (vh 7) t dejavu_16.fnt Blue))
-))
+(define (make-device-entry name)
+    (lambda( g wgt x y w h selected)
+        (if selected (glgui:draw-box x y w h theme-fg))
+        (glgui:draw-text-left (+x 5) y (- w 10) h name dejavu_16.fnt theme-bg)
+    )
+)
 
 (main
     (lambda (w h)
         (make-window width height)
         (glgui-orientation-set! GUI_PORTRAIT)
-
         (set! gui (make-glgui))
-        (glgui-box gui 0 0 width height Grey)
-        (glgui-box gui (center (vh 35)) (vh 5) (vh 35) (vh 10) Blue)
-        (glgui-label gui (center 250) (vh 5) (vh 35) (vh 10) "Start Logging" dejavubold_32.fnt White)
-        (result "Wireless Mouse" 33)
-        (result "PS4 Controller" 25) 
-        (result "HID Keyboard" 17)
-        (glgui-label gui (center (- width 20)) (vh 38) width (vh 10) "(Click on a device to view its data)" dejavu_16.fnt Blue)
-        (glgui-box gui (center (vw 90)) (- (- height (vh 50)) padding) (vw 90) (vh 50) White)
-        (glgui-label gui (center (vw 90)) (- (- height (vh 50)) padding) (vw 90) (vh 50) "Live log data will appear here..." dejavu_16.fnt Black)
-    )
+        (glgui-box gui 0 0 width height theme-bg)
+              
+        ;;draw the title bar
+        (glgui-box gui 0 (vh 90) width (vh 10) theme-fg)
+        (glgui-label gui 0 (vh 90) width (vh 10) " Bluetooth Logger" dejavubold_32.fnt theme-bg)
+        
+        (glgui-box gui padding (vh 55) (- width (* 2 padding)) (vh 30) theme-fg)
+        (glgui-label gui padding (vh 40) width (vh 10) " Paired Devices" dejavubold_32.fnt theme-fg)
+        ;;create the textarea
+        
+        ;;create the device selector
+        (glgui-box gui (* 2 padding) (vh 35) (- width (* 4 padding)) (vh 7) theme-fg)
+        (set! device-selector
+            (glgui-label gui 
+            (* 2 padding) (vh 35) (- width (* 4 padding)) (vh 7) (get-bluetooth-device-name cursor) dejavu_16.fnt theme-bg)
+        )
+        (glgui-box gui (* 2 padding) (vh 25) 100 (vh 5) theme-fg)
+        (glgui-button-string gui (* 2 padding) (vh 25) 100 (vh 5) "Previous" dejavu_16.fnt (lambda (un . used) 
+            (set! cursor (- cursor 1))
+            (glgui-widget-set! gui device-selector 'label (get-bluetooth-device-name cursor))
+        ))
 
+        (glgui-box gui (- (- width (* 2 padding)) 100) (vh 25) 100 (vh 5) theme-fg)
+        (glgui-button-string gui (- (- width (* 2 padding)) 100) (vh 25) 100 (vh 5) "Next" dejavu_16.fnt (lambda (un . used) 
+            (set! cursor (+ cursor 1))
+            (glgui-widget-set! gui device-selector 'label (get-bluetooth-device-name cursor))
+        ))
+
+        (glgui-box gui (* 4 padding) (vh 5) (- width (* 8 padding)) (vh 10) theme-fg)
+        (glgui-button-string gui (* 4 padding) (vh 5) (- width (* 8 padding)) (vh 10) "Log" dejavubold_32.fnt (lambda (un . used) 
+            (glgui-widget-set! gui device-selector 'label (connect-to-bluetooth-device))
+        ))
+    )
     (lambda (t x y)
         (if (= t EVENT_KEYPRESS) (begin
         (if (= x EVENT_KEYESCAPE) (terminate))))
