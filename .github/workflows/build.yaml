@@ -60,7 +60,7 @@ jobs:
        sed -i 's|gcc -Werror|gcc-14 -Werror|g' targets/linux/check-libraries
     - name: Copy app App
       run: |
-        mkdir -p lmabdanative/apps/BluetoothLogger
+        mkdir -p lambdanative/apps/BluetoothLogger
         cp FONTS lambdanative/apps/BluetoothLogger
         cp MODULES lambdanative/apps/BluetoothLogger
         cp VERSION lambdanative/apps/BluetoothLogger
