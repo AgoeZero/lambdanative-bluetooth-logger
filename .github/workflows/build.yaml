@@ -1,0 +1,80 @@
+name: fedora-build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: fedora
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:43
+
+    steps:
+    - uses: actions/checkout@v6
+    - run: cat /etc/os-release
+    - name: install dependencies
+      run: |
+       dnf -y install alsa-lib-devel ant autoconf automake bc curl gambit-c
+       dnf -y install binutils gcc make cmake
+       dnf -y install gcc14 gcc14-c++ git grep ImageMagick-devel java-25-openjdk-devel
+       dnf -y install libtool libXext-devel make mesa-libGL-devel
+       dnf -y install mesa-libGLU-devel netpbm-devel patch perl-FindBin
+       dnf -y install portaudio python3-sdkmanager sed tar tcl-devel texlive
+       dnf -y install which wget zip
+    - name: Get LambdaNative
+      run: |
+       rm -rf lambdanative
+       git clone https://github.com/bkmgit/lambdanative.git -b tinymaix --no-single-branch
+       cd lambdanative
+    - name: setup android
+      run: |
+       # https://stackoverflow.com/a/77215395
+       # https://computingforgeeks.com/install-and-use-android-studio-on-fedora/
+       mkdir -p /home/build/android-sdk
+       export ANDROID_HOME=/home/build/android-sdk
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "platforms;android-28"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "build-tools;29.0.3"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "tools"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "extras;android;m2repository"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "ndk-bundle;r28"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk "platform-tools"
+       echo yes | sdkmanager --sdk_root=/home/build/android-sdk --licenses
+       # https://coderwall.com/p/r09hoq/android-generate-release-debug-keystores
+       # https://stackoverflow.com/a/13578480
+       keytool -genkey -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -noprompt -dname "CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, S=Unknown, C=Unknown"
+    - name: prepare lambdanative
+      working-directory: lambdanative
+      run : |
+       cp SETUP.template SETUP
+       sed -i 's/ANDROIDAPI=21/ANDROIDAPI=28/g' SETUP
+       sed -i 's|/usr/local/android-sdk-*|/home/build/android-sdk|g' SETUP
+       sed -i 's|/usr/local/android-ndk-*|/home/build/android-sdk/ndk-bundle|g' SETUP
+       cp PROFILE.template PROFILE
+       sed -i 's|SYS_ANDROIDPW="yoursecrethere"|SYS_ANDROIDPW="android"|g' PROFILE
+       sed -i 's|SYS_CC="gcc $SYS|SYS_CC="gcc-14 $SYS|g' targets/linux/host_linux
+       sed -i 's|SYS_CXX="g++ $SYS|SYS_CXX="g++-14 $SYS|g' targets/linux/host_linux
+       sed -i 's|gcc -Werror|gcc-14 -Werror|g' targets/linux/check-libraries
+    - name: Copy app App
+      run: |
+        cp -r lambdanative-bluetooth-logger lambdanative/apps/BluetoothLogger
+        cp -r lambdanative-bluetooth-logger/bluetooth-classic lambdanative/modules/bluetooth-classic
+    - name: Android build
+      working-directory: lambdanative
+      run: |
+        sed -i 's/python/python3/g' targets/android/check-tools
+        mkdir -p ~/.cache/lambdanative/android/support
+        ./configure BluetoothLogger --verbose android
+        make || { echo "Android build failed"; cat config.log; exit 1; }
+    - name: APK output
+      run: |
+        ls -R ~/.cache/lambdanative/packages/
+        find $GITHUB_WORKSPACE -name "*.apk"
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: apk
+        path: ~/.cache/lambdanative/packages/*.apk
