@@ -55,8 +55,8 @@ jobs:
        sed -i 's|SYS_CC="gcc $SYS|SYS_CC="gcc-14 $SYS|g' targets/linux/host_linux
        sed -i 's|SYS_CXX="g++ $SYS|SYS_CXX="g++-14 $SYS|g' targets/linux/host_linux
        sed -i 's|gcc -Werror|gcc-14 -Werror|g' targets/linux/check-libraries
-    - name: Copy bluetooth-logger app
-      run: cp -r bluetooth-logger lambdanative/apps/
+    - name: Copy BluetoothLogger app
+      run: cp -r BluetoothLogger lambdanative/apps/
     - name: Copy module
       run: cp -r bluetooth-classic lambdanative/modules/
     - name: android builds
@@ -66,7 +66,7 @@ jobs:
        sed -i 's/python/python3/g' targets/android/check-tools
        # Make directory to avoid errors during build
        mkdir -p /home/build/.cache/lambdanative/android/support
-       ./configure bluetooth-logger android
+       ./configure BluetoothLogger android
        make
     - name: Prepare APK download
       run: |
@@ -74,7 +74,7 @@ jobs:
         # from HOME and the workspace together retains nested directories;
         # Pages then excludes the hidden .cache directory containing the APK.
         mkdir -p apk-download
-        cp "$HOME"/.cache/lambdanative/packages/bluetooth-logger-*-android*.apk apk-download/
+        cp "$HOME"/.cache/lambdanative/packages/BluetoothLogger-*-android*.apk apk-download/
 
     - uses: actions/upload-artifact@v7
       with:
