@@ -63,7 +63,7 @@ jobs:
         mkdir -p lmabdanative/apps/BluetoothLogger
         cp FONTS lambdanative/apps/BluetoothLogger
         cp MODULES lambdanative/apps/BluetoothLogger
-        cp lICENCE lambdanative/apps/BluetoothLogger
+        cp LICENCE lambdanative/apps/BluetoothLogger
         cp VERSION lambdanative/apps/BluetoothLogger
         cp artwork.png lambdanative/apps/BluetoothLogger
         cp main.scm lambdanative/apps/BluetoothLogger
