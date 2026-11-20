@@ -60,7 +60,13 @@ jobs:
        sed -i 's|gcc -Werror|gcc-14 -Werror|g' targets/linux/check-libraries
     - name: Copy app App
       run: |
-        cp -r . lambdanative/apps/BluetoothLogger
+        mkdir -p lmabdanative/apps/BluetoothLogger
+        cp FONTS lambdanative/apps/BluetoothLogger
+        cp MODULES lambdanative/apps/BluetoothLogger
+        cp lICENCE lambdanative/apps/BluetoothLogger
+        cp VERSION lambdanative/apps/BluetoothLogger
+        cp artwork.png lambdanative/apps/BluetoothLogger
+        cp main.scm lambdanative/apps/BluetoothLogger
         cp -r ./bluetooth-classic lambdanative/modules/bluetooth-classic
     - name: Android build
       working-directory: lambdanative
