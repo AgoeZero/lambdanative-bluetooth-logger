@@ -38,25 +38,40 @@ public void JavaConnectToDevice(int id){
   int index = Math.floorMod(id, deviceList.size());
   BluetoothDevice device = deviceList.get(index);
   try {
-    socket = device.createRfcommSocketToServiceRecord(SPP_ID);
-  } catch (IOException e){
+    Method m = device.getClass().getMethod("createRfcommSocket", int.class);
+    socket = (BluetoothSocket) m.invoke(device, 1);
+  } catch (Exception e){
+    PushData(e.getMessage());
     socket = null;
+    return;
   }
   if (socket != null){
     try {
       socket.connect();
     } catch (IOException e){
+      PushData(e.getMessage());
+      return;
       //just ignored
     }
-  } 
+  }
+  PushData("Connected!");
+
+  //now time to create the file and start writing to it
+  String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(new Date());
+  logFile = "ble_log_" + timestamp + ".txt";
+  return; 
 }
 
 public void JavaReadFromSocket(){
-  if (socket == null) return;
+  if (socket == null){
+    PushData("Not Connected");
+    return;
+  }
   InputStream in;
   try{
     in = socket.getInputStream();
   } catch (IOException e){
+    PushData("Problem with input stream");
     return;
   }
   
@@ -65,6 +80,7 @@ public void JavaReadFromSocket(){
   try {
     if (in.available() < 1) return;
   } catch (IOException e){
+    PushData("Data not available");
     return;
   }
 
@@ -73,9 +89,36 @@ public void JavaReadFromSocket(){
   try {
     n = in.read(buffer);
   } catch (IOException e){
+    PushData("Couldnt read data");
     return;
   }
 
   String data = new String(Arrays.copyOf(buffer, n), StandardCharsets.UTF_8);
   PushData(data);
+  FileOutputStream outStream;
+  File file = new File(getExternalFilesDir(null), logFile);
+  try {
+    outStream = new FileOutputStream(file, true); // append the data or create the file. A new file is created on every connect.
+  } catch (IOException e){
+    PushData(e.getMessage());
+    return;
+  }
+
+  //stream opened, now to log the bytes
+  try{
+    outStream.write(buffer);
+  } catch(IOException e){
+    PushData(e.getMessage());
+    return;
+  }
+
+  //close the stream
+  try{
+    outStream.close();
+  } catch(IOException e){
+    PushData(e.getMessage());
+    return;
+  }
+  outStream = null;
+  return;
 }

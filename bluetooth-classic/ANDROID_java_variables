@@ -3,3 +3,4 @@ public BluetoothAdapter adapter;
 List<BluetoothDevice> deviceList;
 public BluetoothSocket socket;
 public UUID SPP_ID;
+public String logFile;

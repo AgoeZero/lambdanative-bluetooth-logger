@@ -5,6 +5,7 @@
 (define theme-bg DarkBlue)
 (define theme-fg White)
 (define device-selector #f)
+(define log-output #f)
 (set! cursor 0)
 
 (define vh(lambda(h)
@@ -19,12 +20,9 @@
     (+ w 0)
 ))
 
-(define (make-device-entry name)
-    (lambda( g wgt x y w h selected)
-        (if selected (glgui:draw-box x y w h theme-fg))
-        (glgui:draw-text-left (+x 5) y (- w 10) h name dejavu_16.fnt theme-bg)
-    )
-)
+(define autorun(lambda()
+    (glgui-widget-set! gui log-output 'label (read-from-bluetooth-socket))
+))
 
 (main
     (lambda (w h)
@@ -37,7 +35,11 @@
         (glgui-box gui 0 (vh 90) width (vh 10) theme-fg)
         (glgui-label gui 0 (vh 90) width (vh 10) " Bluetooth Logger" dejavubold_32.fnt theme-bg)
         
-        (glgui-box gui padding (vh 55) (- width (* 2 padding)) (vh 30) theme-fg)
+        (glgui-box gui padding (vh 60) (- width (* 2 padding)) (vh 20) theme-fg)
+        (set! log-output 
+            (glgui-label gui padding (vh 60) (- width (* 2 padding)) (vh 20) "This is where your log data will appear\n Just checking" dejavu_24.fnt theme-bg)
+        )
+        (glgui-widget-set! gui log-output 'align GUI_ALIGNLEFT)
         (glgui-label gui padding (vh 40) width (vh 10) " Paired Devices" dejavubold_32.fnt theme-fg)
         ;;create the textarea
         
@@ -52,19 +54,20 @@
             (set! cursor (- cursor 1))
             (glgui-widget-set! gui device-selector 'label (get-bluetooth-device-name cursor))
         ))
-
+        
         (glgui-box gui (- (- width (* 2 padding)) 100) (vh 25) 100 (vh 5) theme-fg)
         (glgui-button-string gui (- (- width (* 2 padding)) 100) (vh 25) 100 (vh 5) "Next" dejavu_16.fnt (lambda (un . used) 
             (set! cursor (+ cursor 1))
             (glgui-widget-set! gui device-selector 'label (get-bluetooth-device-name cursor))
         ))
-
+        
         (glgui-box gui (* 4 padding) (vh 5) (- width (* 8 padding)) (vh 10) theme-fg)
         (glgui-button-string gui (* 4 padding) (vh 5) (- width (* 8 padding)) (vh 10) "Log" dejavubold_32.fnt (lambda (un . used) 
-            (glgui-widget-set! gui device-selector 'label (connect-to-bluetooth-device))
+            (connect-to-bluetooth-device cursor)
         ))
     )
     (lambda (t x y)
+        (autorun)
         (if (= t EVENT_KEYPRESS) (begin
         (if (= x EVENT_KEYESCAPE) (terminate))))
         (glgui-event gui t x y)

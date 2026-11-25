@@ -34,11 +34,12 @@ void ConnectToDevice(int id){
   }
 }
 
-void ReadFromSocket(int id){
+char * ReadFromSocket(int id){
   JNIEnv *env = GetJNIEnv();
   jclass main_class = (*env)->FindClass(env, "@SYS_PACKAGE_SLASH@/@SYS_APPNAME@");
   if (env&&globalObj){
     jmethodID method = (*env)->GetMethodID(env, main_class, "JavaReadFromSocket", "()V");
     (*env)->CallVoidMethod(env, globalObj, method);
   }
+  return data;
 }
